@@ -16,6 +16,18 @@ public class UserResponse {
 
     private Role role;
 
+    
+    
+	public UserResponse(Long id, String firstName, String lastName, String email, String mobile, Role role) {
+		super();
+		this.id = id;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.email = email;
+		this.mobile = mobile;
+		this.role = role;
+	}
+
 	public Long getId() {
 		return id;
 	}

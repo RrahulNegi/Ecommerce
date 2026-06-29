@@ -2,6 +2,7 @@ package com.ecom.user.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,8 @@ import com.ecom.user.dto.LoginRequest;
 import com.ecom.user.dto.RegisterRequest;
 import com.ecom.user.dto.UpdateProfileRequest;
 import com.ecom.user.dto.UserResponse;
+import com.ecom.user.exception.UserNotFoundException;
 import com.ecom.user.repositroies.UserRepositroies;
-
-import ch.qos.logback.core.joran.spi.HttpUtil.RequestMethod;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -27,15 +27,8 @@ public class UserServiceImpl implements UserService {
 	public UserResponse register(RegisterRequest request) {
 		User user = new User(request.getFirstName(), request.getLastName(), request.getEmail(),
 				request.getMobile(), request.getPassword(), Role.CUSTOMER, true, true, LocalDateTime.now() );
-		
 		user =  userRepositories.save(user);
-		UserResponse response = new UserResponse();
-		response.setId(user.getId());
-		response.setFirstName(user.getFirstName());
-		response.setLastName(user.getLastName());
-		response.setMobile(user.getMobile());
-		response.setRole(user.getRole());
-		
+		UserResponse response = new UserResponse(user.getId(),user.getFirstName(),user.getLastName(),user.getEmail(),user.getMobile(),user.getRole());
 		return response;
 	}
 
@@ -51,17 +44,33 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserResponse getUser(Long id) {
-		return null;
+		User e = userRepositories.findById(id).orElseThrow(()->new UserNotFoundException("User not found") );
+		UserResponse userResponse = new UserResponse(e.getId(), e.getFirstName(),
+				e.getLastName(), e.getEmail(), e.getMobile(), e.getRole());
+		return userResponse;
+		
 	}
 
 	@Override
 	public List<UserResponse> getAllUsers() {
-		return null;
+		List<User> userList = userRepositories.findAll();
+		List<UserResponse> userResponseList =userList.stream().map(e->new UserResponse(e.getId(), e.getFirstName(),
+				e.getLastName(), e.getEmail(), e.getMobile(), e.getRole())).collect(Collectors.toList());
+		return userResponseList;
 	}
 
 	@Override
 	public UserResponse updateProfile(Long id, UpdateProfileRequest request) {
-		return null;
+		User user = userRepositories.findById(id).map(e->{
+			e.setFirstName(request.getFirstName());
+			e.setLastName(request.getLastName());
+			e.setMobile(request.getMobile());
+			return userRepositories.save(e);
+		}).orElseThrow(()->new UserNotFoundException("User not found"));
+		
+		UserResponse userRes = new UserResponse(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getMobile(), user.getRole());
+		
+		return userRes;
 	}
 
 	@Override
